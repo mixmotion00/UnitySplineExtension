@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2149774947792942916}
   - component: {fileID: 8302806106555678327}
   - component: {fileID: 6050952880240688859}
+  - component: {fileID: 756997031070584037}
   m_Layer: 0
   m_Name: Road-Point
   m_TagString: Untagged
@@ -99,3 +100,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5db30bc0e13324e26a6cefd2f339da3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!135 &756997031070584037
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4932239781208213827}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.89
+  m_Center: {x: 0, y: 0, z: 0}

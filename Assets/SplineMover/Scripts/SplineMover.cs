@@ -2,9 +2,71 @@ using UnityEngine;
 using UnityEngine.Splines;
 using Unity.Mathematics;
 using System.Linq;
+using Unity.VisualScripting;
 
 namespace MMZZ.Spline
 {
+    public enum MouseState 
+    {
+        OnSelect,
+        OnBeginDrag,
+        OnDrag,
+        OnDragEnded
+    }
+
+    public class MouseInputEx
+    {
+        public MouseState State { get; private set; }
+        public float ClickSensitivity { get; set; } // time need for mouse to start dragging
+
+        private bool _isStart;
+        private bool _isDrag;
+        private float _dragTime;
+
+        public MouseInputEx(float clickSensitivity = 0.2f)
+        {
+            _isStart = false;
+            _isDrag = false;
+            _dragTime = 0f;
+            ClickSensitivity = clickSensitivity;
+        }
+
+        public void Tick(float deltaTime)
+        {
+            if (Input.GetMouseButtonDown(0) && _isStart == false)
+            {
+                _dragTime = 0f;
+                _isDrag = false;
+                _isStart = true;
+
+                State = MouseState.OnSelect;
+            }
+            if (Input.GetMouseButtonUp(0) || !Input.GetMouseButton(0))
+            {
+                _isStart = false;
+                _isDrag = false;
+
+                State = MouseState.OnDragEnded;
+            }
+
+            if (Input.GetMouseButton(0) && _isStart)
+            {
+                _dragTime += Time.deltaTime;
+
+                if ((_dragTime > ClickSensitivity))
+                {
+                    _isDrag = true;
+                    State = MouseState.OnDrag;
+                }
+                else 
+                {
+                    _isDrag = false;
+                    State = MouseState.OnBeginDrag;
+                }
+            }
+        }
+    }
+
     [RequireComponent(typeof(SplineContainer), typeof(SplineInstantiate))]
     public class SplineMover : MonoBehaviour
     {
@@ -30,6 +92,74 @@ namespace MMZZ.Spline
 
                 return childCount;
             }
+        }
+
+        private MouseInputEx _mouseInputEx;
+        private SplinePoint _draggedSplinePt;
+        private Camera _mainCam;
+
+        private void Start()
+        {
+            _mainCam = Camera.main;
+            _mouseInputEx = new MouseInputEx(0.1f);
+        }
+
+        private void Update()
+        {
+            _mouseInputEx.Tick(Time.deltaTime);
+
+            if(_mouseInputEx.State == MouseState.OnBeginDrag) 
+            {
+                // check any spline point is selected
+                _draggedSplinePt = DetectSplinePoint();
+            }
+            else if(_mouseInputEx.State == MouseState.OnDrag) 
+            {
+                // if dragged spline exist
+                if (_draggedSplinePt != null) 
+                {
+                    // Create a ray from the mouse position
+                    Ray ray = _mainCam.ScreenPointToRay(Input.mousePosition);
+
+                    // Raycast to detect the clicked position
+                    if (Physics.Raycast(ray, out RaycastHit hitInfo))
+                    {
+                        // Get the clicked position and maintain sphere's Y position
+                        Vector3 targetPosition = hitInfo.point;
+                        targetPosition.y = _draggedSplinePt.transform.position.y;
+
+                        // Move the sphere to the target position
+                        _draggedSplinePt.transform.position = targetPosition;
+                    }
+                }
+            }
+        }
+
+        private SplinePoint DetectSplinePoint()
+        {
+            // Cast a ray from the mouse position
+            Ray ray = _mainCam.ScreenPointToRay(Input.mousePosition);
+            RaycastHit[] hits;
+
+            // Perform the raycast
+            hits = Physics.RaycastAll(ray);
+
+            var splPoints = hits.Where(r => r.collider.gameObject.GetComponent<SplinePoint>() != null).ToList();
+
+            // Check if the ray hits any objects
+            if (splPoints.Count() > 0)
+            {
+                return splPoints.First().collider.gameObject.GetComponent<SplinePoint>();
+
+                //// Iterate through all the hits
+                //foreach (RaycastHit hit in hits)
+                //{
+                //    // Print the name of the hit object
+                //    Debug.Log("Hit object name: " + hit.collider.gameObject.name);
+                //}
+            }
+
+            return null;
         }
 
         public void AutoCreateNextPoint()
